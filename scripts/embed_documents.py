@@ -25,6 +25,31 @@ def ollama_embed_batch(ollama_url: str, model: str, texts: List[str]) -> List[Li
     return data["embeddings"]
 
 
+UPSERT_SQL = """
+INSERT INTO document_embeddings (document_id, model, dims, embedding)
+VALUES (%(document_id)s, %(model)s, %(dims)s, %(embedding)s)
+ON CONFLICT (document_id, model)
+DO UPDATE SET
+  embedding = EXCLUDED.embedding,
+  dims = EXCLUDED.dims,
+  created_at = now();
+"""
+
+
+def fetch_model_dims(conn: psycopg.Connection, model: str) -> int:
+    with conn.cursor() as cur:
+        cur.execute("SELECT dims FROM embedding_models WHERE name = %s", (model,))
+        row = cur.fetchone()
+
+    if row is None:
+        raise SystemExit(
+            f"Model '{model}' is not registered in embedding_models. "
+            "Insert it with its dimension before embedding documents."
+        )
+
+    return int(row[0])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Embed documents.content with Ollama and store in pgvector.")
     ap.add_argument("--model", default="nomic-embed-text:v1.5", help="Ollama embedding model name")
@@ -47,23 +72,23 @@ def main() -> None:
     )
     args = ap.parse_args()
 
-    # どの行を埋めるか：
-    # - forceなし: embeddingがNULL or embedding_modelが違う
-    # - forceあり : 全件
-    where = "TRUE" if args.force else "(embedding IS NULL OR embedding_model IS DISTINCT FROM %(model)s)"
     limit_sql = "" if args.limit <= 0 else "LIMIT %(limit)s"
 
     select_sql = f"""
-        SELECT id, content
-        FROM documents
-        WHERE {where}
-        ORDER BY id
+        SELECT d.id, d.content
+        FROM documents d
+        LEFT JOIN document_embeddings e
+          ON e.document_id = d.id AND e.model = %(model)s
+        WHERE %(force)s OR e.document_id IS NULL OR e.dims IS DISTINCT FROM %(dims)s
+        ORDER BY d.id
         {limit_sql}
     """
 
     with psycopg.connect(args.dsn) as conn:
+        dims = fetch_model_dims(conn, args.model)
+
         with conn.cursor() as cur:
-            params = {"model": args.model, "limit": args.limit}
+            params = {"model": args.model, "limit": args.limit, "force": args.force, "dims": dims}
             cur.execute(select_sql, params)
             rows: List[Tuple[int, str]] = cur.fetchall()
 
@@ -71,7 +96,7 @@ def main() -> None:
         print("No documents to embed. (Already embedded?)")
         return
 
-    print(f"Embedding {len(rows)} documents with model={args.model}")
+    print(f"Embedding {len(rows)} documents with model={args.model} dims={dims}")
 
     # バッチでOllamaに投げて、順次UPDATE
     with psycopg.connect(args.dsn) as conn:
@@ -87,18 +112,22 @@ def main() -> None:
 
                 # 次元チェック（全て同じであることを確認）
                 dim = len(embs[0])
+                if dim != dims:
+                    raise RuntimeError(
+                        f"Model {args.model} expected {dims} dims, but got {dim} dims from Ollama"
+                    )
                 if any(len(e) != dim for e in embs):
                     raise RuntimeError("Embedding dimensions are not consistent within a batch")
 
                 for doc_id, emb in zip(ids, embs):
                     cur.execute(
-                        """
-                        UPDATE documents
-                        SET embedding_model = %s,
-                            embedding = %s
-                        WHERE id = %s
-                        """,
-                        (args.model, to_pgvector_literal(emb), doc_id),
+                        UPSERT_SQL,
+                        {
+                            "document_id": doc_id,
+                            "model": args.model,
+                            "dims": dims,
+                            "embedding": to_pgvector_literal(emb),
+                        },
                     )
 
                 conn.commit()

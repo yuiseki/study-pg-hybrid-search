@@ -8,7 +8,6 @@ import requests
 
 
 MODEL_DEFAULT = "nomic-embed-text:v1.5"
-DIMS_EXPECTED = 768
 
 
 def to_pgvector_literal(vec: List[float]) -> str:
@@ -28,11 +27,35 @@ def ollama_embed_one(ollama_url: str, model: str, text: str) -> List[float]:
     return data["embeddings"][0]
 
 
-INSERT_SQL = """
-INSERT INTO documents (source, title, body, embedding_model, embedding)
-VALUES (%(source)s, %(title)s, %(body)s, %(model)s, %(embedding)s)
+INSERT_DOCUMENT_SQL = """
+INSERT INTO documents (source, title, body)
+VALUES (%(source)s, %(title)s, %(body)s)
 RETURNING id;
 """
+
+UPSERT_EMBEDDING_SQL = """
+INSERT INTO document_embeddings (document_id, model, dims, embedding)
+VALUES (%(document_id)s, %(model)s, %(dims)s, %(embedding)s)
+ON CONFLICT (document_id, model)
+DO UPDATE SET
+  embedding = EXCLUDED.embedding,
+  dims = EXCLUDED.dims,
+  created_at = now();
+"""
+
+
+def fetch_model_dims(conn: psycopg.Connection, model: str) -> int:
+    with conn.cursor() as cur:
+        cur.execute("SELECT dims FROM embedding_models WHERE name = %s", (model,))
+        row = cur.fetchone()
+
+    if row is None:
+        raise SystemExit(
+            f"Model '{model}' is not registered in embedding_models. "
+            "Insert it with its dimension before adding documents."
+        )
+
+    return int(row[0])
 
 
 def main() -> None:
@@ -58,29 +81,40 @@ def main() -> None:
     # スキーマの generated column content と合わせるなら content を埋め込むのが自然です
     text_for_embedding = args.body if args.embed_field == "body" else f"{args.title}\n{args.body}"
 
-    emb = ollama_embed_one(args.ollama_url, args.model, text_for_embedding)
-
-    if len(emb) != DIMS_EXPECTED:
-        raise SystemExit(f"Expected {DIMS_EXPECTED}-dim embedding for {args.model}, got {len(emb)}")
-
-    emb_lit = to_pgvector_literal(emb)
-
-    # psycopg: with conn で例外時rollback、それ以外commitしてclose
     with psycopg.connect(args.dsn) as conn:
+        dims = fetch_model_dims(conn, args.model)
+
+        emb = ollama_embed_one(args.ollama_url, args.model, text_for_embedding)
+
+        if len(emb) != dims:
+            raise SystemExit(
+                f"Expected {dims}-dim embedding for {args.model}, got {len(emb)}"
+            )
+
+        emb_lit = to_pgvector_literal(emb)
+
         with conn.cursor() as cur:
             cur.execute(
-                INSERT_SQL,
+                INSERT_DOCUMENT_SQL,
                 {
                     "source": args.source,
                     "title": args.title,
                     "body": args.body,
-                    "model": args.model,
-                    "embedding": emb_lit,
                 },
             )
             new_id: Any = cur.fetchone()[0]
 
-    print(f"Inserted: id={new_id} model={args.model} dims={len(emb)}")
+            cur.execute(
+                UPSERT_EMBEDDING_SQL,
+                {
+                    "document_id": new_id,
+                    "model": args.model,
+                    "dims": dims,
+                    "embedding": emb_lit,
+                },
+            )
+
+    print(f"Inserted document id={new_id} with embedding model={args.model} dims={dims}")
 
 
 if __name__ == "__main__":

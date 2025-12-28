@@ -20,7 +20,8 @@ stop:
 .PHONY: clean
 clean:
 	docker compose down -v --remove-orphans
-	rm -rf ./db/data/*
+	docker run --rm -v $$(pwd)/db/data:/work busybox sh -c 'rm -rf /work/* /work/.[!.]* /work/..?*'
+	mkdir -p ./db/data
 
 .PHONY: psql
 psql:

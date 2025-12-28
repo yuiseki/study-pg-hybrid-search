@@ -1,2 +1,4 @@
-db/data/*
-!db/data/.gitkeep
+db/data/
+__pycache__/
+tests/__pycache__/
+tests/e2e/__pycache__/

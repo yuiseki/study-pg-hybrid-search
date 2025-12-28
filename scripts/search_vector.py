@@ -22,18 +22,33 @@ def ollama_embed_one(ollama_url: str, model: str, text: str) -> List[float]:
     return data["embeddings"][0]
 
 
-SQL = """
+SQL_TEMPLATE = """
 SELECT
-  id,
-  title,
-  left(content, 80) AS snippet,
-  (embedding::vector(768) <=> %(qvec)s::vector(768)) AS cosine_distance,
-  (1 - (embedding::vector(768) <=> %(qvec)s::vector(768))) AS cosine_similarity
-FROM documents
-WHERE embedding_model = %(model)s AND embedding IS NOT NULL
-ORDER BY embedding::vector(768) <=> %(qvec)s::vector(768)
+  d.id,
+  d.title,
+  left(d.content, 80) AS snippet,
+  (e.embedding::halfvec({dims}) <=> %(qvec)s::halfvec({dims})) AS cosine_distance,
+  (1 - (e.embedding::halfvec({dims}) <=> %(qvec)s::halfvec({dims}))) AS cosine_similarity
+FROM document_embeddings e
+JOIN documents d ON d.id = e.document_id
+WHERE e.model = %(model)s
+ORDER BY e.embedding::halfvec({dims}) <=> %(qvec)s::halfvec({dims})
 LIMIT %(limit)s;
 """
+
+
+def fetch_model_dims(conn: psycopg.Connection, model: str) -> int:
+    with conn.cursor() as cur:
+        cur.execute("SELECT dims FROM embedding_models WHERE name = %s", (model,))
+        row = cur.fetchone()
+
+    if row is None:
+        raise SystemExit(
+            f"Model '{model}' is not registered in embedding_models. "
+            "Insert it with its dimension before running searches."
+        )
+
+    return int(row[0])
 
 
 def main() -> None:
@@ -48,15 +63,19 @@ def main() -> None:
     )
     args = ap.parse_args()
 
-    qvec = ollama_embed_one(args.ollama_url, args.model, args.query)
-    if len(qvec) != 768:
-        raise SystemExit(f"Expected 768-dim embedding, got {len(qvec)}")
-
-    qvec_lit = to_pgvector_literal(qvec)
-
     with psycopg.connect(args.dsn) as conn:
+        dims = fetch_model_dims(conn, args.model)
+
+        qvec = ollama_embed_one(args.ollama_url, args.model, args.query)
+        if len(qvec) != dims:
+            raise SystemExit(f"Expected {dims}-dim embedding, got {len(qvec)}")
+
+        qvec_lit = to_pgvector_literal(qvec)
+
+        sql = SQL_TEMPLATE.format(dims=dims)
+
         with conn.cursor() as cur:
-            cur.execute(SQL, {"qvec": qvec_lit, "model": args.model, "limit": args.limit})
+            cur.execute(sql, {"qvec": qvec_lit, "model": args.model, "limit": args.limit})
             rows: List[Tuple[Any, ...]] = cur.fetchall()
 
     print("id | title | cos_dist | cos_sim | snippet")

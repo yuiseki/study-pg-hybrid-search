@@ -27,7 +27,21 @@ def ollama_embed_one(ollama_url: str, model: str, text: str) -> List[float]:
     return r.json()["embeddings"][0]
 
 
-HYBRID_SQL = """
+def fetch_model_dims(conn: psycopg.Connection, model: str) -> int:
+    with conn.cursor() as cur:
+        cur.execute("SELECT dims FROM embedding_models WHERE name = %s", (model,))
+        row = cur.fetchone()
+
+    if row is None:
+        raise SystemExit(
+            f"Model '{model}' is not registered in embedding_models. "
+            "Insert it with its dimension before running searches."
+        )
+
+    return int(row[0])
+
+
+HYBRID_SQL_TEMPLATE = """
 WITH
 text AS (
   SELECT
@@ -41,12 +55,12 @@ text AS (
 ),
 vec AS (
   SELECT
-    id,
-    row_number() OVER (ORDER BY embedding::vector(768) <=> %(qvec)s::vector(768)) AS r_vec,
-    (embedding::vector(768) <=> %(qvec)s::vector(768)) AS d_vec
-  FROM documents
-  WHERE embedding_model = %(model)s AND embedding IS NOT NULL
-  ORDER BY embedding::vector(768) <=> %(qvec)s::vector(768)
+    e.document_id AS id,
+    row_number() OVER (ORDER BY e.embedding::halfvec({dims}) <=> %(qvec)s::halfvec({dims})) AS r_vec,
+    (e.embedding::halfvec({dims}) <=> %(qvec)s::halfvec({dims})) AS d_vec
+  FROM document_embeddings e
+  WHERE e.model = %(model)s
+  ORDER BY e.embedding::halfvec({dims}) <=> %(qvec)s::halfvec({dims})
   LIMIT %(vec_k)s
 ),
 fused AS (
@@ -92,24 +106,28 @@ def main() -> None:
 
     q_text = as_literal_query(args.query) if args.literal else args.query
 
-    qvec = ollama_embed_one(args.ollama_url, args.model, args.query)
-    if len(qvec) != 768:
-        raise SystemExit(f"Expected 768-dim embedding, got {len(qvec)}")
-    qvec_lit = to_pgvector_literal(qvec)
-
-    params: Dict[str, Any] = {
-        "q": q_text,
-        "qvec": qvec_lit,
-        "model": args.model,
-        "limit": args.limit,
-        "text_k": args.text_k,
-        "vec_k": args.vec_k,
-        "rrf_k": args.rrf_k,
-    }
-
     with psycopg.connect(args.dsn) as conn:
+        dims = fetch_model_dims(conn, args.model)
+
+        qvec = ollama_embed_one(args.ollama_url, args.model, args.query)
+        if len(qvec) != dims:
+            raise SystemExit(f"Expected {dims}-dim embedding, got {len(qvec)}")
+        qvec_lit = to_pgvector_literal(qvec)
+
+        params: Dict[str, Any] = {
+            "q": q_text,
+            "qvec": qvec_lit,
+            "model": args.model,
+            "limit": args.limit,
+            "text_k": args.text_k,
+            "vec_k": args.vec_k,
+            "rrf_k": args.rrf_k,
+        }
+
+        sql = HYBRID_SQL_TEMPLATE.format(dims=dims)
+
         with conn.cursor() as cur:
-            cur.execute(HYBRID_SQL, params)
+            cur.execute(sql, params)
             rows: List[Tuple[Any, ...]] = cur.fetchall()
 
     print("id | title | rrf | r_text | r_vec | s_text | d_vec | cos_sim | snippet")
