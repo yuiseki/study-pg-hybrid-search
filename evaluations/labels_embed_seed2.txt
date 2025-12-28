@@ -1,0 +1,5 @@
+snowflake-arctic-embed:22m:
+nomic-embed-text:v1.5:
+embeddinggemma:300m: 35,15,85,75,65,25,55,5
+snowflake-arctic-embed2:568m: 25,35,5,45,15,85,55,95,75,65
+qwen3-embedding:4b: 98,88,8,18,28,48,58,68,38,78

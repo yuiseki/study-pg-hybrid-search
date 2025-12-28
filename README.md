@@ -120,6 +120,7 @@ python scripts/embed_documents.py --model nomic-embed-text:v1.5 --batch-size 8
 \i sql/10_search_text.sql
 ` のように psql から読み込むと、PGroonga 検索結果を即座に確認できます。
 - `sql/20_create_vector_index.sql` : 埋め込みモデルごとの HNSW インデックス作成と `ANALYZE` をまとめたスクリプトです。モデル名や次元が異なる場合は修正して実行してください。
+- `db/init/020_seed.sql` : 10テーマ×季節表現を組み合わせた100件の seed ドキュメントを投入します。必要に応じて INSERT を差し替えてください。
 
 ## 再初期化と検証のすすめ
 - スキーマを更新した際は `make clean && make start` で `db/data` を空にし、`db/init` を再適用すると確実です。
@@ -130,6 +131,10 @@ python scripts/embed_documents.py --model nomic-embed-text:v1.5 --batch-size 8
 - `tests/e2e` にモック Ollama サーバーと `python -m unittest tests.e2e.test_workflow` で実行できる E2E テストを用意しています。
 - テストは `make clean && make start` + モックサーバー立ち上げ→ `add_document.py` でのINSERT→ `embed_documents.py` の再埋め込み→ `search_vector.py` / `search_hybrid.py` の実行を通しで検証します。
 - 実データを消すため、実行前に `db/data` をバックアップしてください。
+
+## 評価ログ
+- `evaluations/README.md` に、手動ラベリング済みの検索実験（クエリ/モデル別ランキングと relevant ID）を `evaluations/data.json` として保存しています。
+- `./evaluations/calc_metrics.py` を実行すると、recall@k と MRR を再計算できます。新しいクエリを追加する場合は `data.json` を更新のうえ、同スクリプトで確認してください。
 
 ## トラブルシューティングのヒント
 - Ollama が起動していない／モデル未 pull の場合、埋め込み API 呼び出しで `ConnectionError` になります。`ollama pull nomic-embed-text:v1.5` を忘れずに。

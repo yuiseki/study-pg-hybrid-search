@@ -1,0 +1,5 @@
+snowflake-arctic-embed:22m: 3
+nomic-embed-text:v1.5: 3
+embeddinggemma:300m: 3
+snowflake-arctic-embed2:568m: 3
+qwen3-embedding:4b: 3

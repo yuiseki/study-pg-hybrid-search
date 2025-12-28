@@ -1,0 +1,513 @@
+{
+  "cat_seed2": {
+    "query": "猫",
+    "rankings": {
+      "snowflake-arctic-embed:22m": [
+        95,
+        85,
+        90,
+        40,
+        80,
+        70,
+        98,
+        50,
+        10,
+        60
+      ],
+      "nomic-embed-text:v1.5": [
+        9,
+        19,
+        49,
+        29,
+        69,
+        59,
+        89,
+        10,
+        39,
+        40
+      ],
+      "embeddinggemma:300m": [
+        1,
+        11,
+        91,
+        21,
+        51,
+        81,
+        31,
+        61,
+        71,
+        41
+      ],
+      "snowflake-arctic-embed2:568m": [
+        1,
+        11,
+        21,
+        61,
+        41,
+        51,
+        31,
+        71,
+        81,
+        91
+      ],
+      "qwen3-embedding:4b": [
+        1,
+        21,
+        11,
+        91,
+        71,
+        31,
+        61,
+        51,
+        41,
+        81
+      ]
+    },
+    "relevance": {
+      "snowflake-arctic-embed:22m": [],
+      "nomic-embed-text:v1.5": [],
+      "embeddinggemma:300m": [
+        1,
+        11,
+        91,
+        21,
+        51,
+        81,
+        31,
+        61,
+        71,
+        41
+      ],
+      "snowflake-arctic-embed2:568m": [
+        1,
+        11,
+        21,
+        61,
+        41,
+        51,
+        31,
+        71,
+        81,
+        91
+      ],
+      "qwen3-embedding:4b": [
+        1,
+        21,
+        11,
+        91,
+        71,
+        31,
+        61,
+        51,
+        41,
+        81
+      ]
+    }
+  },
+  "meal_seed2": {
+    "query": "食事",
+    "rankings": {
+      "snowflake-arctic-embed:22m": [
+        100,
+        50,
+        40,
+        10,
+        90,
+        98,
+        30,
+        38,
+        20,
+        48
+      ],
+      "nomic-embed-text:v1.5": [
+        14,
+        19,
+        24,
+        69,
+        64,
+        29,
+        34,
+        9,
+        4,
+        74
+      ],
+      "embeddinggemma:300m": [
+        14,
+        90,
+        10,
+        80,
+        100,
+        34,
+        50,
+        20,
+        60,
+        24
+      ],
+      "snowflake-arctic-embed2:568m": [
+        64,
+        54,
+        24,
+        34,
+        14,
+        4,
+        94,
+        74,
+        44,
+        84
+      ],
+      "qwen3-embedding:4b": [
+        1,
+        11,
+        41,
+        51,
+        91,
+        81,
+        3,
+        33,
+        43,
+        21
+      ]
+    },
+    "relevance": {
+      "snowflake-arctic-embed:22m": [],
+      "nomic-embed-text:v1.5": [
+        14,
+        24,
+        64,
+        34,
+        4,
+        74
+      ],
+      "embeddinggemma:300m": [
+        14,
+        34,
+        24
+      ],
+      "snowflake-arctic-embed2:568m": [
+        64,
+        54,
+        24,
+        34,
+        14,
+        4,
+        94,
+        74,
+        44,
+        84
+      ],
+      "qwen3-embedding:4b": []
+    }
+  },
+  "catphrase_seed2": {
+    "query": "吾輩は猫である。名前はまだ無い。",
+    "rankings": {
+      "snowflake-arctic-embed:22m": [
+        45,
+        40,
+        35,
+        10,
+        50,
+        85,
+        15,
+        95,
+        20,
+        70
+      ],
+      "nomic-embed-text:v1.5": [
+        62,
+        2,
+        11,
+        12,
+        91,
+        61,
+        41,
+        42,
+        71,
+        92
+      ],
+      "embeddinggemma:300m": [
+        1,
+        51,
+        11,
+        21,
+        91,
+        81,
+        31,
+        61,
+        71,
+        41
+      ],
+      "snowflake-arctic-embed2:568m": [
+        1,
+        21,
+        51,
+        41,
+        61,
+        31,
+        11,
+        71,
+        91,
+        81
+      ],
+      "qwen3-embedding:4b": [
+        1,
+        11,
+        21,
+        41,
+        51,
+        71,
+        91,
+        81,
+        61,
+        31
+      ]
+    },
+    "relevance": {
+      "snowflake-arctic-embed:22m": [],
+      "nomic-embed-text:v1.5": [
+        11,
+        91,
+        61,
+        41,
+        71
+      ],
+      "embeddinggemma:300m": [
+        1,
+        51,
+        11,
+        21,
+        91,
+        81,
+        31,
+        61,
+        71,
+        41
+      ],
+      "snowflake-arctic-embed2:568m": [
+        1,
+        21,
+        51,
+        41,
+        61,
+        31,
+        11,
+        71,
+        91,
+        81
+      ],
+      "qwen3-embedding:4b": [
+        1,
+        11,
+        21,
+        41,
+        51,
+        71,
+        91,
+        81,
+        61,
+        31
+      ]
+    }
+  },
+  "search_seed2": {
+    "query": "探し物",
+    "rankings": {
+      "snowflake-arctic-embed:22m": [
+        95,
+        50,
+        10,
+        40,
+        90,
+        80,
+        70,
+        85,
+        60,
+        20
+      ],
+      "nomic-embed-text:v1.5": [
+        49,
+        19,
+        29,
+        59,
+        69,
+        9,
+        99,
+        89,
+        39,
+        24
+      ],
+      "embeddinggemma:300m": [
+        85,
+        100,
+        55,
+        50,
+        80,
+        90,
+        35,
+        70,
+        75,
+        95
+      ],
+      "snowflake-arctic-embed2:568m": [
+        2,
+        1,
+        100,
+        12,
+        40,
+        11,
+        22,
+        20,
+        80,
+        62
+      ],
+      "qwen3-embedding:4b": [
+        55,
+        5,
+        65,
+        1,
+        45,
+        95,
+        15,
+        35,
+        75,
+        25
+      ]
+    },
+    "relevance": {
+      "snowflake-arctic-embed:22m": [
+        95,
+        85
+      ],
+      "nomic-embed-text:v1.5": [],
+      "embeddinggemma:300m": [
+        85,
+        55,
+        35,
+        75,
+        95
+      ],
+      "snowflake-arctic-embed2:568m": [
+        2,
+        1,
+        12,
+        11,
+        22,
+        20
+      ],
+      "qwen3-embedding:4b": [
+        55,
+        5,
+        65,
+        45,
+        95,
+        15,
+        35,
+        75,
+        25
+      ]
+    }
+  },
+  "embed_seed2": {
+    "query": "埋め込みベクトル",
+    "rankings": {
+      "snowflake-arctic-embed:22m": [
+        40,
+        10,
+        90,
+        80,
+        50,
+        70,
+        30,
+        20,
+        60,
+        100
+      ],
+      "nomic-embed-text:v1.5": [
+        1,
+        11,
+        41,
+        71,
+        21,
+        61,
+        81,
+        51,
+        31,
+        91
+      ],
+      "embeddinggemma:300m": [
+        35,
+        15,
+        85,
+        75,
+        65,
+        25,
+        58,
+        55,
+        5,
+        28
+      ],
+      "snowflake-arctic-embed2:568m": [
+        25,
+        35,
+        5,
+        45,
+        15,
+        85,
+        55,
+        95,
+        75,
+        65
+      ],
+      "qwen3-embedding:4b": [
+        98,
+        88,
+        8,
+        18,
+        28,
+        48,
+        58,
+        68,
+        38,
+        78
+      ]
+    },
+    "relevance": {
+      "snowflake-arctic-embed:22m": [],
+      "nomic-embed-text:v1.5": [],
+      "embeddinggemma:300m": [
+        35,
+        15,
+        85,
+        75,
+        65,
+        25,
+        55,
+        5
+      ],
+      "snowflake-arctic-embed2:568m": [
+        25,
+        35,
+        5,
+        45,
+        15,
+        85,
+        55,
+        95,
+        75,
+        65
+      ],
+      "qwen3-embedding:4b": [
+        98,
+        88,
+        8,
+        18,
+        28,
+        48,
+        58,
+        68,
+        38,
+        78
+      ]
+    }
+  }
+}
