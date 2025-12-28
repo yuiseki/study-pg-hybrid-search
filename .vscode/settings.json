@@ -1,8 +1,10 @@
 {
     "cSpell.words": [
         "ctid",
+        "embeddinggemma",
         "embs",
         "groonga",
+        "halfvec",
         "HNSW",
         "nomic",
         "Ollama",
@@ -12,6 +14,7 @@
         "psql",
         "psycopg",
         "qvec",
+        "qwen",
         "tableoid",
         "trixie",
         "Unigram"
