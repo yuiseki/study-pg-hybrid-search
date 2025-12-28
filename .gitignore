@@ -2,3 +2,5 @@ db/data/
 __pycache__/
 tests/__pycache__/
 tests/e2e/__pycache__/
+.venv/
+evaluations/out/

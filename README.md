@@ -14,7 +14,7 @@ PostgreSQL 17 上で PGroonga と pgvector を組み合わせ、全文検索と�
 .
 ├── Dockerfile                # Postgres + PGroonga + pgvector イメージ
 ├── docker-compose.yml        # 単一 DB サービス (port 5434)
-├── Makefile                  # 起動/停止/psql などのラッパー
+├── Makefile                  # 起動/停止/psql + 埋め込み/評価ラッパー
 ├── db/
 │   ├── data/                # 永続化ボリューム (初回は空)
 │   └── init/                # 001_extensions.sql 等を自動適用
@@ -132,9 +132,11 @@ python scripts/embed_documents.py --model nomic-embed-text:v1.5 --batch-size 8
 - テストは `make clean && make start` + モックサーバー立ち上げ→ `add_document.py` でのINSERT→ `embed_documents.py` の再埋め込み→ `search_vector.py` / `search_hybrid.py` の実行を通しで検証します。
 - 実データを消すため、実行前に `db/data` をバックアップしてください。
 
-## 評価ログ
-- `evaluations/README.md` に、手動ラベリング済みの検索実験（クエリ/モデル別ランキングと relevant ID）を `evaluations/data.json` として保存しています。
-- `./evaluations/calc_metrics.py` を実行すると、recall@k と MRR を再計算できます。新しいクエリを追加する場合は `data.json` を更新のうえ、同スクリプトで確認してください。
+## 評価ワークフロー
+- 22 件のクエリと relevant doc_id を `evaluations/data.json` に保存し、`run_eval.py` が text/vector/hybrid をまとめてランキング収集します。
+- `calc_metrics.py` は `rankings.jsonl` を読み、recall@k / MRR / nDCG@k を Markdown / JSON で出力します。
+- `make reset && make embed_all && make eval` を実行すると、DB 初期化→全モデル埋め込み→評価＆メトリクス集計まで自動で実行され、成果物は `evaluations/out/<timestamp>/` に保存されます。
+- 詳細手順や JSON スキーマは `evaluations/README.md` を参照してください。
 
 ## トラブルシューティングのヒント
 - Ollama が起動していない／モデル未 pull の場合、埋め込み API 呼び出しで `ConnectionError` になります。`ollama pull nomic-embed-text:v1.5` を忘れずに。
